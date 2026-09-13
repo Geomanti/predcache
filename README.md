@@ -69,8 +69,49 @@ out = cache.get_or_compute(
   box; register custom backends with `register_backend(name, dump, load)`.
 - **Batched inference runner** — framework-agnostic `(start, stop) -> scores`
   contract, progress callbacks, tuned default batch size (500).
+- **OpenTelemetry instrumentation** — optional spans + counters for cache hits,
+  computed predictions, batched inference and feature assembly (see below).
 - **L-inf normalization** helper matching the source system's
   `normalize_vector_absolute`.
+
+## Observability (OpenTelemetry)
+
+`predcache` emits spans and counters for every expensive operation. The
+`opentelemetry-api` package is **optional**: without it predcache runs
+identically with zero overhead; with it installed, signals flow to whatever
+Tracer/Meter provider your application configured.
+
+```bash
+pip install predcache[otel]        # pull in opentelemetry-api
+```
+
+```python
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+
+trace.set_tracer_provider(TracerProvider())
+trace.get_tracer_provider().add_span_processor(
+    BatchSpanProcessor(ConsoleSpanExporter())
+)
+
+from predcache import PredictionCache
+
+cache = PredictionCache("preds.pkl")
+cache.get_or_compute(keys, compute_fn)
+# -> span "predcache.get_or_compute" with predcache.requested / .computed /
+#    .hits / .elapsed_s attributes, + predictions.computed counter
+```
+
+| Signal | Name | Attributes |
+|---|---|---|
+| span | `predcache.get_or_compute` | `predcache.requested`, `.computed`, `.hits`, `.elapsed_s` |
+| span | `predcache.inference` | `predcache.rows`, `.batch_size`, `.elapsed_s` |
+| span | `predcache.features` | `predcache.windows`, `.window`, `.warmup`, `.elapsed_s` |
+| counter | `predcache.predictions.computed` / `.hits` | — |
+| counter | `predcache.inference.batches` / `.rows` | — |
+
+Set `PREDCACHE_OTEL=0` to disable emission entirely (hot loops, test runs).
 
 ## Origin
 

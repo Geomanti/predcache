@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "predcache"
-version = "0.1.0"
+version = "0.2.0"
 description = "Persistent timestamp-keyed prediction cache and batched inference runner for ML models"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -37,7 +37,8 @@ dependencies = ["numpy>=1.21"]
 
 [project.optional-dependencies]
 parquet = ["pandas>=1.5", "pyarrow>=10"]
-test = ["pytest>=7", "pandas>=1.5"]
+otel = ["opentelemetry-api>=1.20"]
+test = ["pytest>=7", "pandas>=1.5", "opentelemetry-api>=1.20", "opentelemetry-sdk>=1.20"]
 
 [project.urls]
 Homepage = "https://github.com/Geomanti/predcache"

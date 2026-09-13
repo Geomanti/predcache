@@ -14,6 +14,8 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence
 
 import numpy as np
 
+from .observability import _TimedSpan, add_count
+
 __all__ = ["BatchedInferenceRunner", "InferenceFn"]
 
 # A scorer takes (start, stop) and returns an array-like of predictions
@@ -79,19 +81,28 @@ class BatchedInferenceRunner:
         out: List[Any] = []
         t0 = time.perf_counter()
         n_batches = 0
-        for start, stop in self.batches():
-            chunk = self.inference_fn(start, stop)
-            out.extend(_row_iter(chunk))
-            n_batches += 1
-            if progress_cb and n_batches % self.progress_every == 0:
-                cb = {
-                    "rows_done": stop,
-                    "rows_total": self.n_samples,
-                    "batches": n_batches,
-                    "elapsed_s": round(time.perf_counter() - t0, 3),
-                }
-                self.progress_log.append(cb)
-                progress_cb(cb)
+        with _TimedSpan(
+            "predcache.inference",
+            {
+                "predcache.rows": self.n_samples,
+                "predcache.batch_size": self.batch_size,
+            },
+        ):
+            for start, stop in self.batches():
+                chunk = self.inference_fn(start, stop)
+                out.extend(_row_iter(chunk))
+                n_batches += 1
+                add_count("predcache.inference.batches", 1)
+                add_count("predcache.inference.rows", stop - start)
+                if progress_cb and n_batches % self.progress_every == 0:
+                    cb = {
+                        "rows_done": stop,
+                        "rows_total": self.n_samples,
+                        "batches": n_batches,
+                        "elapsed_s": round(time.perf_counter() - t0, 3),
+                    }
+                    self.progress_log.append(cb)
+                    progress_cb(cb)
         return out
 
 

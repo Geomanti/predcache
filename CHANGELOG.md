@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-09-13
+
+### Added
+
+- **OpenTelemetry instrumentation** (optional): spans
+  `predcache.get_or_compute` / `predcache.inference` / `predcache.features`
+  with request/compute/hit/rows/batch-size/elapsed attributes, plus counters
+  `predcache.predictions.computed` / `.hits` and
+  `predcache.inference.batches` / `.rows`.
+- `otel` extra (`pip install predcache[otel]`); opentelemetry-api remains
+  optional — without it the package behaves identically (no-op spans).
+- `PREDCACHE_OTEL=0` environment switch to disable emission entirely.
+- `otel_available()` public helper.
+
 ## [0.1.0] - 2026-09-13
 
 ### Added

@@ -12,6 +12,8 @@ from typing import Callable, List, Optional, Sequence
 
 import numpy as np
 
+from .observability import _TimedSpan
+
 __all__ = ["normalize_absolute", "FeatureWindowAssembler"]
 
 
@@ -81,10 +83,18 @@ class FeatureWindowAssembler:
         """Stack feature rows for every window; returns (X, keys)."""
         if self.row_fn is None:
             raise ValueError("row_fn is required to build features")
-        rows: List[np.ndarray] = []
-        for win in self.windows(df):
-            rows.append(np.asarray(self.row_fn(win), dtype=np.float32))
-        if not rows:
-            return np.zeros((0, 0), dtype=np.float32), []
-        keys = self.keys(df, key_col) if key_col else self.keys(df)
-        return np.stack(rows, axis=0), keys
+        with _TimedSpan(
+            "predcache.features",
+            {
+                "predcache.windows": max(0, len(df) - self.warmup),
+                "predcache.window": self.window,
+                "predcache.warmup": self.warmup,
+            },
+        ):
+            rows: List[np.ndarray] = []
+            for win in self.windows(df):
+                rows.append(np.asarray(self.row_fn(win), dtype=np.float32))
+            if not rows:
+                return np.zeros((0, 0), dtype=np.float32), []
+            keys = self.keys(df, key_col) if key_col else self.keys(df)
+            return np.stack(rows, axis=0), keys

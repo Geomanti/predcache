@@ -24,6 +24,8 @@ import tempfile
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Protocol
 
+from .observability import _TimedSpan, add_count
+
 __all__ = ["PredictionCache", "CacheEntry", "register_backend"]
 
 
@@ -200,13 +202,22 @@ class PredictionCache:
         dict ``{key: value}``.  Computed values are merged into the cache.
         """
         missing = [k for k in keys if k not in self._entries]
-        if missing:
-            computed = compute_fn(missing) or {}
-            for k, v in computed.items():
-                self._entries[k] = v
-            self._dirty = True
-            if save:
-                self.save()
+        with _TimedSpan(
+            "predcache.get_or_compute",
+            {
+                "predcache.requested": len(keys),
+                "predcache.computed": len(missing),
+                "predcache.hits": len(keys) - len(missing),
+            },
+        ):
+            if missing:
+                computed = compute_fn(missing) or {}
+                for k, v in computed.items():
+                    self._entries[k] = v
+                self._dirty = True
+                add_count("predcache.predictions.computed", len(computed))
+                if save:
+                    self.save()
         return {k: self._entries[k] for k in keys if k in self._entries}
 
     def drop(self, keys: List[Hashable]) -> int:
