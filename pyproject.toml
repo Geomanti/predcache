@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "predcache"
+version = "0.1.0"
+description = "Persistent timestamp-keyed prediction cache and batched inference runner for ML models"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Anton Uralskii", email = "uralskyanton@gmail.com" }]
+keywords = [
+    "cache",
+    "inference",
+    "batching",
+    "machine-learning",
+    "backtesting",
+    "time-series",
+    "mlops",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = ["numpy>=1.21"]
+
+[project.optional-dependencies]
+parquet = ["pandas>=1.5", "pyarrow>=10"]
+test = ["pytest>=7", "pandas>=1.5"]
+
+[project.urls]
+Homepage = "https://github.com/Geomanti/predcache"
+Repository = "https://github.com/Geomanti/predcache"
+Issues = "https://github.com/Geomanti/predcache/issues"
+Changelog = "https://github.com/Geomanti/predcache/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

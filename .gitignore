@@ -1,0 +1,13 @@
+# Minimal makefile-free ignore set
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+*.pkl
+*.parquet
+.coverage
+htmlcov/
